@@ -1,14 +1,15 @@
 # List of headers
 set(MY_MD_HEADERS
-  hello.h
-  verlet.h
-)
+        hello.h
+        verlet.h
+        types.h
+        )
 
 # List of implementation files
 set(MY_MD_CPP
-  hello.cpp
-  verlet.cpp
-)
+        hello.cpp
+        verlet.cpp
+        )
 
 # Create a static library
 add_library(my_md_lib STATIC ${MY_MD_CPP} ${MY_MD_HEADERS})
@@ -26,7 +27,7 @@ target_compile_options(my_md_lib PUBLIC -Wall -Wextra -Wpedantic)
 # Set up MPI includes and library linking
 # This also propagates to further targets
 if (MPI_FOUND)
-  target_compile_definitions(my_md_lib INTERFACE USE_MPI)
-  target_include_directories(my_md_lib PUBLIC ${MPI_CXX_INCLUDE_DIRS} SYSTEM)
-  target_link_libraries(my_md_lib PUBLIC MPI::MPI_CXX)
-endif()
+    target_compile_definitions(my_md_lib INTERFACE USE_MPI)
+    target_include_directories(my_md_lib PUBLIC ${MPI_CXX_INCLUDE_DIRS} SYSTEM)
+    target_link_libraries(my_md_lib PUBLIC MPI::MPI_CXX)
+endif ()

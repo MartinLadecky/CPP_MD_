@@ -1,27 +1,12 @@
 // Include a library file to make sure proper includes are set
 #include "verlet.h"
 #include <gtest/gtest.h>
+#include "types.h"
 
-//// Demonstrate some basic assertions.
-//TEST(HelloTest, BasicAssertions) {
-//    // Expect two strings not to be equal.
-//    EXPECT_STRNE("hello", "world");
-//    // Expect equality.
-//    EXPECT_EQ(7 * 6, 42);
-//    // Testing if we can call a function from our MD library
-//    hello_eigen();
-//}
-//
-TEST(IntegratorTest, BasicAssertions) {
-    double x = 1;
-    double y = 0;
-    double z = 0;
-    double vx = 1;
-    double vy = 0;
-    double vz = 0;
-    double fx = 1;
-    double fy = 0;
-    double fz = 0;
+TEST(IntegratorTest, SingleAtom) {
+    double x = 1, y = 0, z = 0;
+    double vx = 1, vy = 0, vz = 0;
+    double fx = 1, fy = 0, fz = 0;
     double timestep = 0.1;
 
     // Expect equality.
@@ -56,13 +41,55 @@ TEST(IntegratorTest, BasicAssertions) {
 
     }
 }
-// Testing if we can call a function from our MD library
-//    hello_eigen();
-//}
-//
-//for (int i = 0; i < nb_steps; ++i) {
-//std::cout << "Step: " << i << std::endl;
-//verlet_step1(args...);
-//... compute forces here ...
-//        verlet_step2(args...);
-//}
+
+
+TEST(IntegratorTest, ConstantForce) {
+    int nb_atoms = 4;
+    // initialisation
+    Positions_t positions(3, nb_atoms);
+    Velocities_t velocities(3, nb_atoms);
+    Forces_t forces(3, nb_atoms);
+    Masses_t masses(nb_atoms);
+
+    // setting random velocities
+    positions.setRandom();
+    velocities.setRandom();
+    forces.setRandom();
+    masses.setOnes();
+
+    int nb_steps = 2;
+    double timestep;
+    timestep = 0.1;
+
+    auto initial_positions{positions};
+    auto initial_velocities{velocities};
+
+
+    for (int i = 0; i < nb_steps; ++i) {
+
+        verlet_step1(positions, velocities,
+                     forces, masses, timestep);
+
+
+        verlet_step2(velocities, forces, masses, timestep);
+
+        auto analytical_velocities{initial_velocities + (forces.rowwise() / masses.transpose()) * (i + 1) * timestep};
+
+        auto analytical_positions{initial_positions + initial_velocities * (i + 1) * timestep +
+                                  0.5 * forces * ((i + 1) * timestep) *
+                                  ((i + 1) * timestep)};
+
+
+        for (int i{0}; i < nb_atoms; ++i) {
+            for (int dim{0}; dim < 3; ++dim) {
+
+                EXPECT_NEAR(velocities(dim, i),
+                            analytical_velocities(dim, i), 1e-10);
+                EXPECT_NEAR(positions(dim, i),
+                            analytical_positions(dim, i), 1e-10);
+            }
+        }
+
+
+    }
+}
